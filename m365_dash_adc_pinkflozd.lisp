@@ -112,7 +112,7 @@
 (loopwhile t
     (progn
         ;(if (<= (get-speed) 0.28)
-        (progn
+        ;(progn
             (if (> buttonold (gpio-read 'pin-rx))
                 (progn
                     (setvar 'presses (+ presses 1))
@@ -178,10 +178,10 @@
                         )
                     )
                 )
-            ;)
+            )
 
             (setvar 'buttonold (gpio-read 'pin-rx))
-        ))
+        ;))
         (sleep 0.01)
     )
 )
