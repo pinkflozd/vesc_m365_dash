@@ -47,29 +47,6 @@
 
 (defun outp(buffer)
     (progn
-        (if (= off 1)
-            (bufset-u8 tx-frame 6 16)
-            (bufset-u8 tx-frame 6 speedmode))
-
-        (bufset-u8 tx-frame 7 (*(get-batt) 100))
-
-        (if (>= (get-temp-fet) 60)
-            (bufset-u8 tx-frame 6 128)
-        )
-       
-        (if (> feedback 0)
-            (progn
-                (bufset-u8 tx-frame 9 1)
-                (setvar 'feedback (- feedback 1))
-            )
-            (bufset-u8 tx-frame 9 0))
-
-        (if (> (current-speed) 1)
-            (bufset-u8 tx-frame 10 (current-speed))
-            (bufset-u8 tx-frame 10 (get-temp-fet)))
-
-        (bufset-u8 tx-frame 11 (get-fault))
-
         (setvar 'crc 0)
         (looprange i 2 12
             (setvar 'crc (+ crc (bufget-u8 tx-frame i))))
@@ -114,6 +91,29 @@
 (loopwhile t
     (progn
         (setvar 'current-speed (*(get-speed) 3.6))
+
+        (if (= off 1)
+            (bufset-u8 tx-frame 6 16)
+            (bufset-u8 tx-frame 6 speedmode))
+
+        (bufset-u8 tx-frame 7 (*(get-batt) 100))
+
+        (if (>= (get-temp-fet) 60)
+            (bufset-u8 tx-frame 6 128)
+        )
+       
+        (if (> feedback 0)
+            (progn
+                (bufset-u8 tx-frame 9 1)
+                (setvar 'feedback (- feedback 1))
+            )
+            (bufset-u8 tx-frame 9 0))
+
+        (if (> (current-speed) 1)
+            (bufset-u8 tx-frame 10 (current-speed))
+            (bufset-u8 tx-frame 10 (get-temp-fet)))
+
+        (bufset-u8 tx-frame 11 (get-fault))
 
         (if (<= (current-speed) 1)
         (progn
