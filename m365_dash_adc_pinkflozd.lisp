@@ -25,6 +25,8 @@
 
 (define feedback 0)
 
+(define current-speed 0)
+
 (defun inp(buffer)
     (progn
         (setvar 'throttle (/(bufget-u8 uart-buf 4) 255.0))
@@ -62,8 +64,8 @@
             )
             (bufset-u8 tx-frame 9 0))
 
-        (if (> (get-speed) 0.28)
-            (bufset-u8 tx-frame 10 (* (get-speed) 3.6))
+        (if (> (current-speed) 1)
+            (bufset-u8 tx-frame 10 (current-speed))
             (bufset-u8 tx-frame 10 (get-temp-fet)))
 
         (bufset-u8 tx-frame 11 (get-fault))
@@ -111,8 +113,10 @@
 
 (loopwhile t
     (progn
-        ;(if (<= (get-speed) 0.28)
-        ;(progn
+        (setvar 'current-speed (*(get-speed) 3.6))
+
+        (if (<= (current-speed) 1)
+        (progn
             (if (> buttonold (gpio-read 'pin-rx))
                 (progn
                     (setvar 'presses (+ presses 1))
@@ -181,7 +185,7 @@
             )
 
             (setvar 'buttonold (gpio-read 'pin-rx))
-        ;))
+        ))
         (sleep 0.01)
     )
 )
