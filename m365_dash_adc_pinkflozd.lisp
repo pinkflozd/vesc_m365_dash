@@ -84,17 +84,17 @@
                 (bufset-u8 tx-frame 6 16)
                 (bufset-u8 tx-frame 6 speedmode))
 
+            (if (>= (get-temp-fet) 60)
+                (bufset-u8 tx-frame 6 128))
+
             (bufset-u8 tx-frame 7 (*(get-batt) 100))
 
-            (if (>= (get-temp-fet) 60)
-                (bufset-u8 tx-frame 6 128)
-            )
+            (bufset-u8 tx-frame 8 0)
         
             (if (> feedback 0)
                 (progn
                     (bufset-u8 tx-frame 9 1)
-                    (setvar 'feedback (- feedback 1))
-                )
+                    (setvar 'feedback (- feedback 1)))
                 (bufset-u8 tx-frame 9 0))
 
             (if (> (current-speed) 1)
