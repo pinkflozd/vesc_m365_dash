@@ -26,6 +26,7 @@
 (define feedback 0)
 
 (define current-speed 0)
+(define t-fet 0)
 
 (defun inp(buffer)
     (progn
@@ -80,7 +81,7 @@
         (progn
             (setvar 'current-speed (*(get-speed) 3.6))
 
-            (if (!= off 1)
+            (if (= off 0)
                 (bufset-u8 tx-frame 6 speedmode)
                 (bufset-u8 tx-frame 6 16))
 
@@ -97,20 +98,20 @@
                     (setvar 'feedback (- feedback 1)))
                 (bufset-u8 tx-frame 9 0))
 
-            (if (> (current-speed) 1)
-                (bufset-u8 tx-frame 10 (current-speed))
+            (if (> current-speed 1)
+                (bufset-u8 tx-frame 10 current-speed)
                 (bufset-u8 tx-frame 10 (get-temp-fet)))
 
             (bufset-u8 tx-frame 11 (get-fault))
 
-            (sleep 0.1)
+            (sleep 0.5)
 )))
 
 (spawn dash-updates) 
 
 (loopwhile t
     (progn
-        (if (<= (current-speed) 1)
+        (if (<= current-speed 1)
         (progn
             (if (> buttonold (gpio-read 'pin-rx))
                 (progn
