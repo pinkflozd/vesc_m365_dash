@@ -80,9 +80,9 @@
         (progn
             (setvar 'current-speed (*(get-speed) 3.6))
 
-            (if (= off 1)
-                (bufset-u8 tx-frame 6 16)
-                (bufset-u8 tx-frame 6 speedmode))
+            (if (!= off 1)
+                (bufset-u8 tx-frame 6 speedmode)
+                (bufset-u8 tx-frame 6 16))
 
             (if (>= (get-temp-fet) 60)
                 (bufset-u8 tx-frame 6 128))
