@@ -35,15 +35,11 @@
         (if (= off 0)
             (progn
                 (app-adc-override 0 throttle)
-                (app-adc-override 1 brake)
-            )
+                (app-adc-override 1 brake))
             (progn
                 (app-adc-override 0 0)
-                (app-adc-override 1 0)
-            )
-        )
-    )
-)
+                (app-adc-override 1 0))
+)))
 
 (defun outp(buffer)
     (progn
@@ -55,8 +51,7 @@
         (bufset-u8 tx-frame 13 (shr c-out 8))
 
         (uart-write tx-frame)
-    )
-)
+))
 
 (defun read-thd()
     (loopwhile t
@@ -76,15 +71,7 @@
                                     (if(= (bufget-u8 uart-buf 1) 0x65)
                                         (inp uart-buf))
                                     (outp uart-buf)
-                                )
-                            )
-                        )
-                    )
-                )
-            )
-        )
-    )
-)
+)))))))))
 
 (spawn 150 read-thd) 
 
@@ -117,9 +104,7 @@
             (bufset-u8 tx-frame 11 (get-fault))
 
             (sleep 0.1)
-        )
-    )
-)
+)))
 
 (spawn dash-updates) 
 
@@ -169,11 +154,7 @@
                                                         (setvar 'speedmode 2)
                                                     )
                                                 )
-                                            )
-                                        )
-                                    )
-                                )
-                            )
+                            )))))
     
                             (if (>= presses 2)
                                 (progn
@@ -183,19 +164,12 @@
                                             (conf-set 'l-watt-max 150000)
                                             (setvar 'speedmode 4)
                                             (setvar 'feedback 1)
-                                        )
-                                    )
-                                )
-                            )
+                            ))))
 
                             (setvar 'presses 0)
-                        )
-                    )
-                )
-            )
+                        ))))
 
             (setvar 'buttonold (gpio-read 'pin-rx))
         ))
         (sleep 0.01)
-    )
-)
+))
