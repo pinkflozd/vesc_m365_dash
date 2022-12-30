@@ -50,7 +50,7 @@
         (setvar 'throttle (/(bufget-u8 uart-buf 4) 255.0))
         (setvar 'brake (/(bufget-u8 uart-buf 5) 255.0))
 
-        (if (or (= off 0) (< current-speed min-speed))
+        (if (or (= off 0) (> current-speed min-speed))
             (progn
                 (app-adc-override 0 throttle)
                 (app-adc-override 1 brake)
