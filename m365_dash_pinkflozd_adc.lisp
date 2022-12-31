@@ -1,4 +1,6 @@
-(define min-speed 0.5)
+(app-adc-detach 3 1) 
+
+(define min-speed 1)
 (define button-safety-speed 1)
 
 (define eco-speed (/ 26 3.6))
@@ -50,10 +52,16 @@
         (setvar 'throttle (/(bufget-u8 uart-buf 4) 255.0))
         (setvar 'brake (/(bufget-u8 uart-buf 5) 255.0))
 
-        (if (or (= off 0) (> current-speed min-speed))
-            (progn
-                (app-adc-override 0 throttle)
-                (app-adc-override 1 brake)
+        (if (= off 0)
+            (if (> current-speed min-speed)
+                (progn
+                    (app-adc-override 0 throttle)
+                    (app-adc-override 1 brake)
+                )
+                (progn
+                    (app-adc-override 0 0)
+                    (app-adc-override 1 0)
+                )
             )
             (progn
                 (app-adc-override 0 0)
