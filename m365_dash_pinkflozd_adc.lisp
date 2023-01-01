@@ -1,7 +1,8 @@
 (app-adc-detach 3 1) 
 
-(define min-speed 1)
-(define button-safety-speed 1)
+(define min-speed 0.5)
+(define brk-minspeed 2)
+(define button-safety-speed 4)
 
 (define eco-speed (/ 26 3.6))
 (define eco-current 0.6)
@@ -54,14 +55,12 @@
 
         (if (= off 0)
             (if (> current-speed min-speed)
-                (progn
-                    (app-adc-override 0 throttle)
-                    (app-adc-override 1 brake)
-                )
-                (progn
-                    (app-adc-override 0 0)
-                    (app-adc-override 1 0)
-                )
+                (app-adc-override 0 throttle)
+                (app-adc-override 0 0)
+            )
+            (if (> current-speed brk-minspeed)
+                (app-adc-override 1 brake)
+                (app-adc-override 1 0)
             )
             (progn
                 (app-adc-override 0 0)
@@ -131,7 +130,7 @@
                 (progn
                     (setvar 'len (bufget-u8 uart-buf 2))
                     (setvar 'crc len)
-                    (if (and (> len 0) (< len 400))
+                    (if (and (> len 0) (< len 380))
                         (progn
                             (uart-read-bytes uart-buf (+ len 4) 0)
                             (looprange i 0 len
