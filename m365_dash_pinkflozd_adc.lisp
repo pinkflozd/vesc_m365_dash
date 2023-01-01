@@ -14,9 +14,9 @@
 (define sport-current 1.0)
 (define sport-watts 700)
 
-(define secret-speed (/ 400 3.6))
+(define secret-speed (/ 100 3.6))
 (define secret-current 1.0)
-(define secret-watts 1500000)
+(define secret-watts 10000)
 
 (define power-amps (/ 100 (conf-get 'l-in-current-max)))
 (define min-temp 10)
@@ -54,13 +54,15 @@
         (setvar 'brake (/(bufget-u8 uart-buf 5) 255.0))
 
         (if (= off 0)
-            (if (> current-speed min-speed)
-                (app-adc-override 0 throttle)
-                (app-adc-override 0 0)
-            )
-            (if (> current-speed brk-minspeed)
-                (app-adc-override 1 brake)
-                (app-adc-override 1 0)
+            (progn
+                (if (> current-speed min-speed)
+                    (app-adc-override 0 throttle)
+                    (app-adc-override 0 0)
+                )
+                (if (> current-speed brk-minspeed)
+                    (app-adc-override 1 brake)
+                    (app-adc-override 1 0)
+                )
             )
             (progn
                 (app-adc-override 0 0)
