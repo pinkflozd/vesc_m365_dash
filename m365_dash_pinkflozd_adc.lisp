@@ -14,11 +14,11 @@
 (define sport-current 1.0)
 (define sport-watts 700)
 
-(define secret-speed (/ 100 3.6))
+(define secret-speed (/ 200 3.6))
 (define secret-current 1.0)
-(define secret-watts 10000)
+(define secret-watts 100000)
 
-(define power-amps (/ 100 (conf-get 'l-in-current-max)))
+(define power-amps (/ 100 (+ (conf-get 'l-in-current-max) 1.5)))
 (define min-temp 10)
 (define max-temp 60)
 
@@ -47,6 +47,7 @@
 (define feedback 0)
 
 (define battery 0)
+(define update 0)
 
 (defun adc-input(buffer)
     (progn
@@ -74,8 +75,6 @@
 
 (defun update-data()
     (progn
-        (setvar 'current-speed (*(get-speed) 3.6))
-        (setvar 'battery (*(get-batt) 100))
 
         (if (= off 0)
             (progn
@@ -84,7 +83,7 @@
                     (bufset-u8 tx-frame 6 (+ 128 speedmode))
                 )
                 
-                (if (> current-speed 1)
+                (if (> current-speed min-speed)
                     (progn
                         (bufset-u8 tx-frame 10 (to-i current-speed))
                         (bufset-u8 tx-frame 7 (to-i (* power-amps (get-current-in))))
@@ -94,14 +93,26 @@
                         (bufset-u8 tx-frame 7 (to-i (*(/(- (get-temp-fet) min-temp) (- max-temp min-temp)) 100)))
                     )
                 )
-                (if (> (get-fault) 0)
-                    (bufset-u8 tx-frame 11 (get-fault))
-                )
+                (bufset-u8 tx-frame 11 (get-fault))
                 
             )
             (bufset-u8 tx-frame 6 16)
         )       
 
+    )
+)
+
+(defun update-dash(buffer)
+    (progn
+    
+        (if (= update 1)
+            (setvar 'update 0)
+            (progn
+                (update-data)
+                (setvar 'update 1)
+            )
+        )
+        
         (if (> feedback 0)
            (progn
                (bufset-u8 tx-frame 9 1)
@@ -109,11 +120,7 @@
            )
            (bufset-u8 tx-frame 9 0)
         )
-    )
-)
-
-(defun update-dash(buffer)
-    (progn
+           
         (setvar 'crc 0)
         (looprange i 2 12
             (setvar 'crc (+ crc (bufget-u8 tx-frame i))))
@@ -132,7 +139,7 @@
                 (progn
                     (setvar 'len (bufget-u8 uart-buf 2))
                     (setvar 'crc len)
-                    (if (and (> len 0) (< len 380))
+                    (if (> len 0)
                         (progn
                             (uart-read-bytes uart-buf (+ len 4) 0)
                             (looprange i 0 len
@@ -153,7 +160,9 @@
         (if(= code 0x65)
             (adc-input uart-buf)
         )
+        (if (= len 7)
             (update-dash uart-buf)
+        )
     )
 )
 
@@ -273,7 +282,8 @@
         )
         (setvar 'buttonold (gpio-read 'pin-rx))
         
-        (update-data)
+        (setvar 'current-speed (*(get-speed) 3.6))
+        (setvar 'battery (*(get-batt) 100))
         
         (sleep 0.1)
     )
