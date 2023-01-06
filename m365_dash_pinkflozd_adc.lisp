@@ -244,7 +244,43 @@
     )
 )
 
-(apply-mode)
+(defun buttons()  
+    (loopwhile t
+        (progn
+            (if (> buttonold (gpio-read 'pin-rx))
+                (progn
+                    (setvar 'presses (+ presses 1))
+                    (setvar 'presstime (systime))
+                )
+                (if (> (- (systime) presstime) 2500)
+                    (if (= (gpio-read 'pin-rx) 0)
+                        (if (> (- (systime) presstime) 6000)
+                            (progn
+                                (if (<= current-speed button-safety-speed)
+                                    (handle-holding-button)
+                                )
+                                (reset-button)
+                            )
+                        )
+                        (progn
+                            (if (> presses 0)
+                                (progn
+                                    (if (<= current-speed button-safety-speed)
+                                        (handle-button)
+                                    )
+                                    (reset-button)
+                                )
+                            )
+                        )
+                    )
+                )
+            )
+            (setvar 'buttonold (gpio-read 'pin-rx))
+
+            (sleep 0.1)
+        )
+    )
+)
 
 (defun restart-thread()
     (progn
@@ -254,43 +290,8 @@
     )
 )
 
-(restart-thread)
+(apply-mode)
 
-(loopwhile t
-    (progn
-        (if (> buttonold (gpio-read 'pin-rx))
-            (progn
-                (setvar 'presses (+ presses 1))
-                (setvar 'presstime (systime))
-            )
-            (if (> (- (systime) presstime) 2500)
-                (if (= (gpio-read 'pin-rx) 0)
-                    (if (> (- (systime) presstime) 6000)
-                        (progn
-                            (if (<= current-speed button-safety-speed)
-                                (handle-holding-button)
-                            )
-                            (reset-button)
-                        )
-                    )
-                    (progn
-                        (if (> presses 0)
-                            (progn
-                                (if (<= current-speed button-safety-speed)
-                                    (handle-button)
-                                )
-                                (reset-button)
-                            )
-                        )
-                    )
-                )
-            )
-        )
-        (setvar 'buttonold (gpio-read 'pin-rx))
-        
-        (setvar 'current-speed (*(get-speed) 3.6))
-        (setvar 'battery (*(get-batt) 100))
-        
-        (sleep 0.1)
-    )
-)
+(spawn 50 buttons)
+
+(restart-thread)
