@@ -14,11 +14,11 @@
 (define sport-current 1.0)
 (define sport-watts 700)
 
-(define secret-speed (/ 200 3.6))
+(define secret-speed (/ 100 3.6))
 (define secret-current 1.0)
-(define secret-watts 100000)
+(define secret-watts 10000)
 
-(define power-amps (/ 100 (+ (conf-get 'l-in-current-max) 1.5)))
+(define power-amps (/ 100 (+ (conf-get 'l-in-current-max) 2)))
 (define min-temp 10)
 (define max-temp 60)
 
@@ -285,6 +285,10 @@
 (defun restart-thread()
     (progn
         (spawn-trap 200 read-frames)
+        
+        (app-adc-override 0 0)
+        (setvar 'throttle 0)
+        
         (recv  ((exit-error (? tid) (? e)) (restart-thread))
         ((exit-ok    (? tid) (? v)) (restart-thread)))
     )
