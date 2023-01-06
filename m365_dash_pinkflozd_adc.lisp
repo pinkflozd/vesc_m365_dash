@@ -139,7 +139,7 @@
                 (progn
                     (setvar 'len (bufget-u8 uart-buf 2))
                     (setvar 'crc len)
-                    (if (> len 0)
+                    (if (and (> len 0) (< len 10))
                         (progn
                             (uart-read-bytes uart-buf (+ len 4) 0)
                             (looprange i 0 len
@@ -160,9 +160,7 @@
         (if(= code 0x65)
             (adc-input uart-buf)
         )
-        (if (= len 7)
-            (update-dash uart-buf)
-        )
+        (update-dash uart-buf)
     )
 )
 
@@ -248,7 +246,15 @@
 
 (apply-mode)
 
-(spawn 150 read-frames)
+(defun restart-thread()
+    (progn
+        (spawn-trap 150 read-frames)
+        (recv  ((exit-error (? tid) (? e)) (restart-thread))
+        ((exit-ok    (? tid) (? v)) (restart-thread)))
+    )
+)
+
+(restart-thread)
 
 (loopwhile t
     (progn

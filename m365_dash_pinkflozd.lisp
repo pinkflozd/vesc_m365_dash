@@ -6,9 +6,9 @@
 (define cal-brk-hi 167.0)
 (define brk-deadzone 0.05)
 
-(define brk-minspeed 0.5)
+(define brk-minspeed 3)
 (define min-speed 0.5)
-(define button-safety-speed 1)
+(define button-safety-speed 6)
 
 (define eco-speed (/ 26 3.6))
 (define eco-current 0.6)
@@ -55,6 +55,7 @@
 (define feedback 0)
 
 (define battery 0)
+(define update 0)
 
 (defun adc-input(buffer)
     (progn
@@ -99,9 +100,6 @@
 
 (defun update-data()
     (progn
-        (setvar 'current-speed (*(get-speed) 3.6))
-        (setvar 'battery (*(get-batt) 100))
-
         (if (= off 0)
             (progn
                 (if (< (get-temp-fet) max-temp)
@@ -125,8 +123,21 @@
                 
             )
             (bufset-u8 tx-frame 6 16)
-        )       
+        )
+    )
+)
 
+(defun update-dash(buffer)
+    (progn
+    
+        (if (= update 1)
+            (setvar 'update 0)
+            (progn
+                (update-data)
+                (setvar 'update 1)
+            )
+        )
+        
         (if (> feedback 0)
            (progn
                (bufset-u8 tx-frame 9 1)
@@ -134,11 +145,7 @@
            )
            (bufset-u8 tx-frame 9 0)
         )
-    )
-)
-
-(defun update-dash(buffer)
-    (progn
+        
         (setvar 'crc 0)
         (looprange i 2 12
             (setvar 'crc (+ crc (bufget-u8 tx-frame i))))
@@ -157,7 +164,7 @@
                 (progn
                     (setvar 'len (bufget-u8 uart-buf 2))
                     (setvar 'crc len)
-                    (if (and (> len 0) (< len 400))
+                    (if (and (> len 0) (< len 10))
                         (progn
                             (uart-read-bytes uart-buf (+ len 4) 0)
                             (looprange i 0 len
@@ -264,7 +271,15 @@
 
 (apply-mode)
 
-(spawn 150 read-frames)
+(defun restart-thread()
+    (progn
+        (spawn-trap 150 read-frames)
+        (recv  ((exit-error (? tid) (? e)) (restart-thread))
+        ((exit-ok    (? tid) (? v)) (restart-thread)))
+    )
+)
+
+(restart-thread)
 
 (loopwhile t
     (progn
@@ -298,7 +313,8 @@
         )
         (setvar 'buttonold (gpio-read 'pin-rx))
         
-        (update-data)
+        (setvar 'current-speed (*(get-speed) 3.6))
+        (setvar 'battery (*(get-batt) 100))
         
         (sleep 0.1)
     )
