@@ -284,7 +284,7 @@
 
 (defun restart-thread()
     (progn
-        (spawn-trap 150 read-frames)
+        (spawn-trap 200 read-frames)
         (recv  ((exit-error (? tid) (? e)) (restart-thread))
         ((exit-ok    (? tid) (? v)) (restart-thread)))
     )
