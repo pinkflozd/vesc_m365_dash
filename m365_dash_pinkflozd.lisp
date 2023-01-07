@@ -157,6 +157,18 @@
     )
 )
 
+(defun stop-power()
+    (progn
+        (set-current-rel 0)
+        (setvar 'throttle 0)
+        (setvar 'throttle-in 0)
+        
+        (set-brake-rel 0)
+        (setvar 'brake 0)
+        (setvar 'brake-in 0)
+    )
+)
+
 (defun read-frames()
     (loopwhile t
         (progn
@@ -165,15 +177,20 @@
                 (progn
                     (setvar 'len (bufget-u8 uart-buf 2))
                     (setvar 'crc len)
-                    (if (and (> len 0) (< len 10))
+                    (if (< len 10)
                         (progn
-                            (uart-read-bytes uart-buf (+ len 4) 0)
-                            (looprange i 0 len
-                                (setvar 'crc (+ crc (bufget-u8 uart-buf i))))
-                            (if (=(+(shl(bufget-u8 uart-buf (+ len 2))8) (bufget-u8 uart-buf (+ len 1))) (bitwise-xor crc 0xFFFF))
-                                (handle-frame (bufget-u8 uart-buf 1))
+                            (if (and (> len 0) (< len 10))
+                                (progn
+                                    (uart-read-bytes uart-buf (+ len 4) 0)
+                                    (looprange i 0 len
+                                        (setvar 'crc (+ crc (bufget-u8 uart-buf i))))
+                                    (if (=(+(shl(bufget-u8 uart-buf (+ len 2))8) (bufget-u8 uart-buf (+ len 1))) (bitwise-xor crc 0xFFFF))
+                                        (handle-frame (bufget-u8 uart-buf 1))
+                                    )
+                                )
                             )
                         )
+                        (stop-power)
                     )
                 )
             )
@@ -315,9 +332,7 @@
     (progn
         (spawn-trap 200 read-frames)
         
-        (set-current-rel 0)
-        (setvar 'throttle 0)
-        (setvar 'throttle-in 0)
+        (stop-power)
         
         (recv  
             ((exit-error (? tid) (? e)) (restart-thread))
