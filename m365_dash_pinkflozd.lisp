@@ -101,9 +101,6 @@
 (defun update-data()
     (progn
     
-        (setvar 'current-speed (*(get-speed) 3.6))
-        (setvar 'battery (*(get-batt) 100))
-        
         (if (= off 0)
             (progn
                 (if (< (get-temp-fet) max-temp)
@@ -305,6 +302,9 @@
                 )
             )
             (setvar 'buttonold (gpio-read 'pin-rx))
+            
+            (setvar 'current-speed (*(get-speed) 3.6))
+            (setvar 'battery (*(get-batt) 100))
 
             (sleep 0.1)
         )

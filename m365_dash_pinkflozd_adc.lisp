@@ -276,6 +276,9 @@
                 )
             )
             (setvar 'buttonold (gpio-read 'pin-rx))
+            
+            (setvar 'current-speed (*(get-speed) 3.6))
+            (setvar 'battery (*(get-batt) 100))
 
             (sleep 0.1)
         )
