@@ -289,8 +289,10 @@
         (app-adc-override 0 0)
         (setvar 'throttle 0)
         
-        (recv  ((exit-error (? tid) (? e)) (restart-thread))
-        ((exit-ok    (? tid) (? v)) (restart-thread)))
+        (recv  
+            ((exit-error (? tid) (? e)) (restart-thread))
+            ((exit-ok    (? tid) (? v)) (restart-thread))
+        )
     )
 )
 

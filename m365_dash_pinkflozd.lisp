@@ -319,8 +319,10 @@
         (setvar 'throttle 0)
         (setvar 'throttle-in 0)
         
-        (recv  ((exit-error (? tid) (? e)) (restart-thread))
-        ((exit-ok    (? tid) (? v)) (restart-thread)))
+        (recv  
+            ((exit-error (? tid) (? e)) (restart-thread))
+            ((exit-ok    (? tid) (? v)) (restart-thread))
+        )
     )
 )
 
