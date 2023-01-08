@@ -1,8 +1,8 @@
 (app-adc-detach 3 1) 
 
 (define min-speed 0.5)
-(define brk-minspeed 2)
-(define button-safety-speed 4)
+(define brk-minspeed 1)
+(define button-safety-speed 7)
 
 (define eco-speed (/ 26 3.6))
 (define eco-current 0.6)
@@ -14,11 +14,11 @@
 (define sport-current 1.0)
 (define sport-watts 700)
 
-(define secret-speed (/ 100 3.6))
+(define secret-speed (/ 200 3.6))
 (define secret-current 1.0)
-(define secret-watts 10000)
+(define secret-watts 50000)
 
-(define power-amps (/ 100 (+ (conf-get 'l-in-current-max) 2)))
+(define power-amps (/ 100 (conf-get 'l-in-current-max)))
 (define min-temp 10)
 (define max-temp 60)
 
@@ -47,10 +47,11 @@
 (define feedback 0)
 
 (define battery 0)
-(define update 0)
 
 (defun adc-input(buffer)
     (progn
+        (sleep 0.001) 
+        
         (setvar 'throttle (/(bufget-u8 uart-buf 4) 255.0))
         (setvar 'brake (/(bufget-u8 uart-buf 5) 255.0))
 
@@ -70,6 +71,7 @@
                 (app-adc-override 1 0)
             )
         )
+        (timeout-reset)
     )
 )
 
@@ -105,13 +107,7 @@
 (defun update-dash(buffer)
     (progn
     
-        (if (= update 1)
-            (setvar 'update 0)
-            (progn
-                (update-data)
-                (setvar 'update 1)
-            )
-        )
+        (update-data)
         
         (if (> feedback 0)
            (progn
@@ -149,20 +145,22 @@
                 (progn
                     (setvar 'len (bufget-u8 uart-buf 2))
                     (setvar 'crc len)
-                    (if (< len 10)
-                        (progn
-                            (if (and (> len 0) (< len 10))
-                                (progn
-                                    (uart-read-bytes uart-buf (+ len 4) 0)
-                                    (looprange i 0 len
-                                        (setvar 'crc (+ crc (bufget-u8 uart-buf i))))
-                                    (if (=(+(shl(bufget-u8 uart-buf (+ len 2))8) (bufget-u8 uart-buf (+ len 1))) (bitwise-xor crc 0xFFFF))
-                                        (handle-frame (bufget-u8 uart-buf 1))
-                                    )
+                    
+                    (setvar 'current-speed (*(get-speed) 3.6))
+                    (setvar 'battery (*(get-batt) 100))
+                    
+                    (progn
+                        (if (and (> len 0) (< len 10))
+                            (progn
+                                (uart-read-bytes uart-buf (+ len 4) 0)
+                                (looprange i 0 len
+                                    (setvar 'crc (+ crc (bufget-u8 uart-buf i))))
+                                (if (=(+(shl(bufget-u8 uart-buf (+ len 2))8) (bufget-u8 uart-buf (+ len 1))) (bitwise-xor crc 0xFFFF))
+                                    (handle-frame (bufget-u8 uart-buf 1))
                                 )
                             )
+                            (stop-power)
                         )
-                        (stop-power)
                     )
                 )
             )
@@ -291,9 +289,6 @@
                 )
             )
             (setvar 'buttonold (gpio-read 'pin-rx))
-            
-            (setvar 'current-speed (*(get-speed) 3.6))
-            (setvar 'battery (*(get-batt) 100))
 
             (sleep 0.1)
         )
@@ -302,7 +297,7 @@
 
 (defun restart-thread()
     (progn
-        (spawn-trap 200 read-frames)
+        (spawn-trap 150 read-frames)
         
         (stop-power)
         
