@@ -50,7 +50,7 @@
 
 (defun adc-input(buffer)
     (progn
-        (sleep 0.001) 
+        (sleep 0.0005) 
         
         (setvar 'throttle (/(bufget-u8 uart-buf 4) 255.0))
         (setvar 'brake (/(bufget-u8 uart-buf 5) 255.0))
@@ -297,7 +297,7 @@
 
 (defun restart-thread()
     (progn
-        (spawn-trap 150 read-frames)
+        (spawn-trap 200 read-frames)
         
         (stop-power)
         
