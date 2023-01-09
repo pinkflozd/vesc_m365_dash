@@ -77,6 +77,14 @@
 
 (defun update-data()
     (progn
+        
+        (if (> feedback 0)
+           (progn
+               (bufset-u8 tx-frame 9 1)
+               (setvar 'feedback (- feedback 1))
+           )
+           (bufset-u8 tx-frame 9 0)
+        )
 
         (if (= off 0)
             (progn
@@ -106,17 +114,8 @@
 
 (defun update-dash(buffer)
     (progn
-    
         (update-data)
-        
-        (if (> feedback 0)
-           (progn
-               (bufset-u8 tx-frame 9 1)
-               (setvar 'feedback (- feedback 1))
-           )
-           (bufset-u8 tx-frame 9 0)
-        )
-           
+   
         (setvar 'crc 0)
         (looprange i 2 12
             (setvar 'crc (+ crc (bufget-u8 tx-frame i))))
@@ -145,10 +144,6 @@
                 (progn
                     (setvar 'len (bufget-u8 uart-buf 2))
                     (setvar 'crc len)
-                    
-                    (setvar 'current-speed (*(get-speed) 3.6))
-                    (setvar 'battery (*(get-batt) 100))
-                    
                     (progn
                         (if (and (> len 0) (< len 10))
                             (progn
@@ -289,6 +284,10 @@
                 )
             )
             (setvar 'buttonold (gpio-read 'pin-rx))
+            
+            (setvar 'current-speed (*(get-speed) 3.6))
+            (setvar 'battery (*(get-batt) 100))
+            (override-temp-motor (- (* 1.5 (get-temp-fet)) 11))
 
             (sleep 0.1)
         )
