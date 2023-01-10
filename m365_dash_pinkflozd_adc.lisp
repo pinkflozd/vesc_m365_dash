@@ -1,7 +1,6 @@
 (app-adc-detach 3 1) 
 
 (define min-speed 0.5)
-(define brk-minspeed 1)
 (define button-safety-speed 7)
 
 (define eco-speed (/ 26 3.6))
@@ -55,37 +54,22 @@
         (setvar 'throttle (/(bufget-u8 uart-buf 4) 255.0))
         (setvar 'brake (/(bufget-u8 uart-buf 5) 255.0))
 
-        (if (= off 0)
+        (if (and (> current-speed min-speed) (= off 0))
             (progn
-                (if (> current-speed min-speed)
-                    (app-adc-override 0 throttle)
-                    (app-adc-override 0 0)
-                )
-                (if (> current-speed brk-minspeed)
-                    (app-adc-override 1 brake)
-                    (app-adc-override 1 0)
-                )
+                (app-adc-override 0 throttle)
+                (app-adc-override 1 brake)
+                (timeout-reset)
             )
             (progn
                 (app-adc-override 0 0)
-                (app-adc-override 1 0)
+                (app-adc-override 0 0)
             )
         )
-        (timeout-reset)
     )
 )
 
-(defun update-data()
+(defun update-dash(buffer)
     (progn
-        
-        (if (> feedback 0)
-           (progn
-               (bufset-u8 tx-frame 9 1)
-               (setvar 'feedback (- feedback 1))
-           )
-           (bufset-u8 tx-frame 9 0)
-        )
-
         (if (= off 0)
             (progn
                 (if (< (get-temp-fet) max-temp)
@@ -106,15 +90,19 @@
                 (bufset-u8 tx-frame 11 (get-fault))
                 
             )
-            (bufset-u8 tx-frame 6 16)
-        )       
-
-    )
-)
-
-(defun update-dash(buffer)
-    (progn
-        (update-data)
+            (progn
+                (sleep 1)
+                (bufset-u8 tx-frame 6 16)
+            )
+        )
+        
+        (if (> feedback 0)
+           (progn
+               (bufset-u8 tx-frame 9 1)
+               (setvar 'feedback (- feedback 1))
+           )
+           (bufset-u8 tx-frame 9 0)
+        )
    
         (setvar 'crc 0)
         (looprange i 2 12
@@ -287,7 +275,15 @@
             
             (setvar 'current-speed (*(get-speed) 3.6))
             (setvar 'battery (*(get-batt) 100))
-            (override-temp-motor (- (* 1.5 (get-temp-fet)) 11))
+            (override-temp-motor (- (* 1.6 (get-temp-fet)) 12))
+            
+            (if (> 90 battery)
+                (conf-set 'l-watt-min -50000)
+                (if (> 95 battery)
+                    (conf-set 'l-watt-min -150)
+                    (conf-set 'l-watt-min 0)
+                )
+            )
 
             (sleep 0.1)
         )
